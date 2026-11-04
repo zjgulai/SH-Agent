@@ -1,0 +1,46 @@
+{
+  "source": "PRD/feishu/内容审查Agent-PRD-v1.0.md §5.3–5.4",
+  "cases": [
+    {
+      "id": "PRD53-REVIEW-2",
+      "state": "REVIEW",
+      "item_count": 2,
+      "category": "合规与受监管宣称",
+      "expected": {"numbered_items": 2, "report_link": false, "action": "建议转"}
+    },
+    {
+      "id": "PRD53-REVIEW-3",
+      "state": "REVIEW",
+      "item_count": 3,
+      "category": "合规与受监管宣称",
+      "expected": {"numbered_items": 0, "summary_lines": 1, "report_link": true, "action": "建议转"}
+    },
+    {
+      "id": "PRD53-BLOCK-2",
+      "state": "BLOCK",
+      "item_count": 2,
+      "category": "合规与受监管宣称",
+      "expected": {"numbered_items": 2, "report_link": false, "action": "请修改后重新提交。"}
+    },
+    {
+      "id": "PRD53-BLOCK-4",
+      "state": "BLOCK",
+      "item_count": 4,
+      "category": "合规与受监管宣称",
+      "expected": {"numbered_items": 0, "summary_lines": 1, "report_link": true, "action": "请修改后重新提交。"}
+    }
+  ],
+  "state_contract": ["PASS", "REVIEW", "BLOCK"],
+  "state_inputs": [
+    {"id": "PRD53-PASS", "state": "PASS", "kb_covered": true, "finding_count": 0},
+    {"id": "PRD53-REVIEW", "state": "REVIEW", "kb_covered": true, "finding_count": 1},
+    {"id": "PRD53-BLOCK", "state": "BLOCK", "kb_covered": true, "finding_count": 1}
+  ],
+  "cross_layer_evidence": [
+    {"requirement": "same-image identity and source-message attribution", "test_id": "N1/N2/N4", "source": "tools/test_agent.mjs"},
+    {"requirement": "unique counts and report evidence consistency", "test_id": "Z49/Z49b/Z49c/Z49d/Z49e/Z70/Z71", "source": "tools/test_agent.mjs"},
+    {"requirement": "three-state decision receipt and send gate", "test_id": "W1/W7/W10/Y4/Y5", "source": "tools/test_agent.mjs"},
+    {"requirement": "PRD §5.3 card formatting and boundary", "test_id": "①/②/③/④/⑤", "source": "tools/agent/prd53_format.test.mjs"},
+    {"requirement": "PRD §5.3 merged report structure and publish threshold", "test_id": "T1/T2/T3/R1/R2/R3", "source": "tools/agent/merged_report.test.mjs"}
+  ]
+}

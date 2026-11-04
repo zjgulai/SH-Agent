@@ -1,0 +1,223 @@
+{
+  "schema": "verifier-coverage/v1",
+  "why": [
+    "这文件存在的理由：图谱里 tested_by 边 = 0。25 个验算器覆盖了什么，",
+    "只活在每个 verifier 的源码文本里 —— 任何工具都读不到，改名/换路径不会有东西红。",
+    "所以这里把「谁验什么」显式声明成机器可读的，并由 tools/verify_coverage.py 反证：",
+    "① 每个 verify_* 必须在册（不许有孤儿验算器）；",
+    "② 每个 subjects 条目必须**在该 verifier 的源码里逐字出现**（改名/写错就红）；",
+    "③ 每个 subjects 条目必须在盘上存在，除非显式标 untracked 并写明原因；",
+    "④ 算不出静态目标的，必须显式写 dynamic 原因，不许留空。",
+    "★ 只声明不反证 = 又一处没有执行点的文档；本文件由 verify_coverage.py 消费。"
+  ],
+  "verifiers": [
+    {
+      "verifier": "tools/verify_engine_contract.py",
+      "asserts": "引擎契约（V 组闸门）：规则表结构、指纹、未决项唯一书写位置、处置分层",
+      "subjects": [
+        "research/governance/skeleton/rules-v1.json",
+        "research/governance/skeleton/engine-manifest.json",
+        "research/governance/skeleton/legal-decisions-v1.json"
+      ]
+    },
+    {
+      "verifier": "tools/verify_kb.py",
+      "asserts": "知识库：G1 存在性 / E1 证据 / E7 外部承诺未逾期",
+      "subjects": [
+        "tools/kb_build.py",
+        "tools/kb_facts.py",
+        "tools/kb_gaps.py",
+        "tools/kb_query.py"
+      ]
+    },
+    {
+      "verifier": "tools/verify_cards.mjs",
+      "asserts": "模版 / 字段登记 / 文档三者一致 + 去 AI 味规则正反例 + 信封上限",
+      "subjects": [
+        "tools/reply-cards/cards.mjs",
+        "tools/reply-cards/registry.mjs",
+        "tools/reply-cards/contract.md",
+        "tools/reply-cards/README.md",
+        "PMO/守衡-回复卡片模版与语域规程.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_feishu_index.py",
+      "asserts": "飞书可达资源索引：租户判定 / 可达性 / 原文抽取 / 可达清单完整",
+      "subjects": [
+        "tools/feishu_index.py",
+        "research/feishu/资源索引-v1.json",
+        "research/feishu/可达清单.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_prd_baseline.py",
+      "asserts": "上游 PRD 基线漂移：L1 结构 / L2 副本=指纹 / L3 上游=指纹；L3 未测退 2",
+      "subjects": [
+        "PRD/feishu/索引-v1.json",
+        "tools/lark_find.py",
+        "tools/verify_depad.py"
+      ]
+    },
+    {
+      "verifier": "tools/verify_pending.py",
+      "asserts": "待收清单：承诺必须指得出上游原话；我方提问不许写成对方承诺（C2/C3）",
+      "subjects": [
+        "PMO/待收清单-v1.json",
+        "tools/agent/prd_baseline.mjs"
+      ]
+    },
+    {
+      "verifier": "tools/verify_reply_context.py",
+      "asserts": "回复上文：话题回复的 parent_id 有没有被真的读进来（A 纯函数 / B 接线含 feishu 取形状 / C 反向对照 / D 拿 2026-09-22 那次误答的真实事件做回归）",
+      "subjects": [
+        "tools/agent/thread.mjs",
+        "tools/agent/agent.mjs",
+        "tools/agent/feishu.mjs"
+      ]
+    },
+    {
+      "verifier": "tools/verify_outbound.py",
+      "asserts": "出站留痕与入记忆：主动推送有没有落台账、回话前有没有把「我说过但记忆里没有的」折进会话（A 纯函数/临时台账 · B 接线含全仓发送者总表 · C 反向对照 · D 拿 2026-09-22 那次误答的真实台账+真实会话做回归 · G post/interactive 读得对不对）",
+      "subjects": [
+        "tools/agent/outbound.mjs",
+        "tools/agent/agent.mjs",
+        "tools/agent/feishu.mjs",
+        "tools/ws_daemon.mjs",
+        "tools/send_once.mjs",
+        "tools/outbound_ledger.mjs"
+      ]
+    },
+    {
+      "verifier": "tools/verify_shouheng_ops.py",
+      "asserts": "守衡运维：重启闸门默认拒绝 / 不许绕过 / KeepAlive 自愈 / 它现在还活着",
+      "subjects": [
+        "tools/ws_daemon.mjs",
+        "tools/restart_shouheng.sh",
+        "tools/com.shouheng.lark.plist"
+      ]
+    },
+    {
+      "verifier": "tools/verify_landing.py",
+      "asserts": "落地页抓取指标：一致性 / 稳定性 / 快照口径",
+      "subjects": [
+        "tools/lp_stability.py",
+        "research/landing/指标.json",
+        "research/landing/一致性分析.json"
+      ]
+    },
+    {
+      "verifier": "tools/verify_external.py",
+      "asserts": "外部标准库：条目必须在来源快照中逐字命中（无形态差、无空位差）",
+      "subjects": [
+        "research/kb/外部标准库-v1.json"
+      ]
+    },
+    {
+      "verifier": "tools/verify_vocab_lark.py",
+      "asserts": "词表飞书 ↔ 本地逐词一致（回读值，不是写入返回码）",
+      "subjects": [
+        "research/governance/skeleton/context-guards-v1.json",
+        "research/governance/skeleton/whitelist-v1.json"
+      ]
+    },
+    {
+      "verifier": "tools/verify_depad.py",
+      "asserts": "全仓生成物可读性：有没有文件被环境 +4096 填充成 read 工具打不开",
+      "subjects": [],
+      "dynamic": "目标是『全仓所有文本文件』，运行时递归枚举，没有可声明的静态子集"
+    },
+    {
+      "verifier": "tools/verify_coverage.py",
+      "asserts": "本登记表自身：名册双向完整 / 主体在盘上 / 主体在各自源码里可查 / 反向对照",
+      "subjects": [
+        "tools/verifier-coverage.json"
+      ]
+    },
+    {
+      "verifier": "research/distill/verify_citations.py",
+      "asserts": "distill 分片的引用可回溯到来源快照",
+      "subjects": [],
+      "dynamic": "目标按 research/distill/ 目录内容在运行时枚举"
+    },
+    {
+      "verifier": "base/verify_base.py",
+      "asserts": "基座自证：各模块自证通过 · L1 自足性 · 分级与 .gitignore 一致 · 无未登记产物",
+      "subjects": [
+        "base/contract.py",
+        "base/text_stage.py",
+        "base/judge_adapter.py",
+        "base/media.py"
+      ]
+    },
+    {
+      "verifier": "tools/verify_skill.py",
+      "asserts": "S0：验的对象必须在 git ls-files 里（没入库退 2，不是退 0）；然后才把规程文档里每条 bash 命令真跑一遍",
+      "subjects": [
+        "agent-skills/内容合规审查/SKILL.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_doc_reachability.py",
+      "asserts": "文档可达性：每份 ADR / 每篇 PMO/守衡-* 可达 · 不可达总数不超钉住值 · 非豁免的第一方文档全部可达 · 不可达集合被三个声明了判据的豁免类**分区**（分项之和 == 总数）",
+      "subjects": [
+        "README.md",
+        "AGENTS.md",
+        "skills-inventory/refs/README.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_adr_status.py",
+      "asserts": "ADR 台账与 ADR 文件的状态逐条相等（双源冲突由构造不可能）：每个 ADR 恰好一条状态行、取值在规则 6 的四个里、台账集合 ≡ 磁盘集合、日期是 YYYY-MM-DD",
+      "subjects": [
+        "ADR/README.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_open_items.py",
+      "asserts": "未决项「等了多久、在等谁、沉默会发生什么」：每条 open 项带合法且非未来的 raised_at、带 owner 与 default_if_unanswered；未决项数 ≤ 棘轮",
+      "subjects": [
+        "research/governance/skeleton/legal-decisions-v1.json"
+      ]
+    },
+    {
+      "verifier": "tools/verify_reference_census.py",
+      "asserts": "零引用可执行文件的棘轮：只许减不许增；基线不许拿不在册的文件充数；分母塌了（git 取不到 / 口径被改）要红，而不是伪装成「0 个零引用」；基线自身排除出提及池（否则它把自己钉住的名单刷成有人提及）",
+      "subjects": [
+        "tools/reference-census-baseline.json"
+      ]
+    },
+    {
+      "verifier": "tools/verify_browser_ext_artifact.py",
+      "asserts": "L1 里那件 418KB 产物（Q39 选项 A）：跑一遍构建配方再逐文件 sha256 对回 dsh-browser-ext/ —— A2 产物都在且都被 git 跟踪 · A3 配方退 0 · A4 文件集合与内容全等 · A5 分母钉在 16；`.vendor/` 不在盘上（换台机器就是这样）→ **退 2 未测**，不是绿。★ 配方本体（`cd .vendor/dsh-browser-main/extensions/dsh-browser && node scripts/build.mjs`）就在这个文件的 docstring 里。★ 已知的口径缺口，明着写在这里而不是绕过去：本器**真正依赖的 `.vendor/…` 不在 subjects 里** —— verify_coverage.py 的 `untracked` 是**每条目一个开关**（face E 会对该条目的**所有** subjects 要求未被跟踪），所以「已跟踪主体 + 未跟踪主体」这个组合它目前表达不了；本器选前者。",
+      "subjects": [
+        "dsh-browser-ext/panel/assets/index.js",
+        "dsh-browser-ext/manifest.json",
+        "ADR/ADR-0013-基座接口冻结与仓库入库分级.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_fixed.py",
+      "asserts": "已修问题索引：清单可读 / id 唯一 / 指的文件都在 / enforced_by 判据串真的在源码里 / 自证命令存在 / 无两条同根因 / 人读索引同步",
+      "subjects": [
+        "PMO/已修问题.jsonl",
+        "PMO/已修问题索引.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_agents_budget.py",
+      "asserts": "AGENTS.md 的工作区指令预算（65536）+ 余量下限（3288）+ 搬走的那份逐字还在且本文件 0 残留",
+      "subjects": [
+        "AGENTS.md",
+        "PMO/填充态-环境特性-实测史.md"
+      ]
+    },
+    {
+      "verifier": "tools/verify_lark_share.py",
+      "asserts": "「外部标准库」那张表别人点不点得开（link_share_entity 真读三态：tenant_editable / tenant_readable / closed）",
+      "subjects": [
+        "tools/migrate_external_to_lark.py"
+      ]
+    }
+  ]
+}

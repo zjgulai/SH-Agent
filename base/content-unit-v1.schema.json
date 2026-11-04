@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "content-unit-v1.schema.json",
+  "title": "ContentUnit · content-unit-v1",
+  "description": "基座第①面（ADR-0013 D1/D9）：任意形态的内容 → 同一种可判、可溯、可复现的信封。★ 本文件是**文档与结构声明**；可执行的真相是 base/contract.py 的 validate()（H1–H14）。base/contract.py --selftest 有一条断言在守「schema 里的 required/enum 与语料实际吻合」，防止本文件悄悄过期。",
+  "type": "object",
+  "required": [
+    "contract_version", "unit_id", "content_key", "source", "fingerprint",
+    "normalization", "composition", "textification", "text", "has_text", "routing", "context"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "contract_version": {
+      "const": "content-unit-v1",
+      "description": "H1。形状变了就换版本号，不原地改字段含义。"
+    },
+    "unit_id": {
+      "type": "string",
+      "pattern": "^cu[0-9a-f]{16}$",
+      "description": "H7。一次**观测**的标识：sha256('cu-v1|kind|raw_sha256|text_sha256')[:16]。原件变了就是新的一次观测，因此 id 也变。"
+    },
+    "content_key": {
+      "type": "string",
+      "pattern": "^ck[0-9a-f]{16}$",
+      "description": "H7。**这一版正文**的稳定标识：sha256('ck-v1|kind|text_sha256')[:16]。★ 措辞经 B2 订正（Owner 裁定 A）：它答的是「这是哪一版正文」，**不是**「这两次看到的是不是同一个东西」—— 同一批页面隔一天重抓约 70% 换 key（评论数/价格/促销横幅都在动）。「变没变」由 base/change_detect.py 的判据 claim-set-v1 回答。实测：136 个观测折叠为 133 个 id（3 个 url_key 取到同一个 target）。"
+    },
+    "source": {
+      "type": "object",
+      "required": ["kind", "uri"],
+      "properties": {
+        "kind": {
+          "enum": ["ad_text", "free_text", "landing_page", "structured_json", "image", "video"],
+          "description": "H8。取值域封闭：加新形态要同时改 contract.py、本 schema、并加一条 builder。"
+        },
+        "uri": {
+          "type": "string",
+          "minLength": 1,
+          "description": "★ 是**实际被取的那个 target**，不是逻辑页面键。实测：92 个 url_key 对应 133 个 target（48 个是 <页面>.js）。"
+        },
+        "raw_bytes": { "type": ["integer", "null"] },
+        "raw_pointer": {
+          "type": ["string", "null"],
+          "description": "原件在 L2 的指针（内容寻址，文件名即指纹）。可为 null —— 指不到时 raw_verified 必须是 false，**不假装验证过**。"
+        },
+        "raw_verified": {
+          "type": "boolean",
+          "description": "raw_sha256 是否由**落盘原件重算**得来（而不是抄自上游记录）。"
+        },
+        "page_key": { "type": "string", "description": "逻辑页面键（url_key）。与 uri 不同：一个 page_key 可对应多个 target。" },
+        "target_label": { "type": "string" },
+        "http_status": { "type": ["integer", "null"] }
+      }
+    },
+    "fingerprint": {
+      "type": "object",
+      "required": ["raw_sha256", "text_sha256", "text_chars"],
+      "description": "D9 双指纹。两个都要，且都不许省：raw 答「看的是哪份原件」，text 答「重跑能不能得到一样的数」。实测依据：4 个页面各取两次，raw 变 4/4、text 变 0/4。",
+      "properties": {
+        "raw_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "H6。原件的指纹（广告记录 = 整行规范化 JSON；落地页 = 原始响应体）。" },
+        "raw_bytes": { "type": ["integer", "null"] },
+        "text_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "H4。必须等于 sha256(text)。对不上就说明指纹与正文脱钩了。" },
+        "text_chars": { "type": "integer", "minimum": 0, "description": "H4。必须等于 len(text)。" }
+      }
+    },
+    "normalization": {
+      "type": "object",
+      "required": ["profile", "steps"],
+      "description": "H9。具名档位，不是实现细节 —— 改档位 = 改所有 unit 的 text_sha256，因此它会进回执。",
+      "properties": {
+        "profile": { "enum": ["text-v1"] },
+        "steps": {
+          "type": "array",
+          "items": { "enum": ["unicode_nfc", "newline_lf", "strip"] },
+          "description": "text-v1 = 这三步，顺序即数组顺序。**不含** collapse_whitespace —— 它有代价（广告 10/291、页面 2/92）且方向错：会把「两次抓取只差空白」抹平成「内容没变」。"
+        }
+      }
+    },
+    "composition": {
+      "type": "object",
+      "required": ["profile", "separator", "parts"],
+      "description": "H10–H12。正文由哪些字段、按什么口径拼成。规范口径是 fields-pipe-v1（' | '）。",
+      "properties": {
+        "profile": { "enum": ["fields-pipe-v1", "passthrough-v1", "fields-newline-v1"] },
+        "separator": { "type": "string" },
+        "omitted_empty_fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "被跳过的空字段要显式列名。留个洞不说，读的人会把「字段本来是空的」误读成「拼装漏了」。"
+        },
+        "parts": {
+          "type": "array",
+          "description": "H11 逐字可核：text[start:end] 的 sha256 必须等于 value_sha256。这条让「拼装没吃掉也没掺入任何字符」在**不持有原件**时也能验（ADR-0008 §四）。",
+          "items": {
+            "type": "object",
+            "required": ["field", "start", "end", "chars", "value_sha256"],
+            "properties": {
+              "field": { "type": "string" },
+              "start": { "type": "integer", "minimum": 0 },
+              "end": { "type": "integer", "minimum": 0 },
+              "chars": { "type": "integer", "minimum": 0 },
+              "value_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            }
+          }
+        }
+      }
+    },
+    "textification": {
+      "type": ["object", "null"],
+      "description": "非文本形态的「怎么变成文字」。★ 对图片/视频，covers 与 does_not_cover 是**必填**：只报「识别完整度 X%」而不写它只覆盖图内文字，等于把「画面暗示功效」这类真实风险记成已覆盖（ADR-0013 异议二）。",
+      "required": ["extractor", "lossy", "covers", "does_not_cover"],
+      "properties": {
+        "extractor": { "type": "string" },
+        "lossy": { "type": "boolean", "description": "正文是否由原件**有损**转换而来。文本直通为 false；HTML/OCR/ASR 为 true。" },
+        "covers": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "does_not_cover": { "type": "array", "items": { "type": "string" } },
+        "textified_from": { "type": ["string", "null"] }
+      }
+    },
+    "text": {
+      "type": "string",
+      "description": "★ 判定输入。H2/H3：必须是 str，且必须是归一化的不动点（normalize(text) == text）——否则「先归一化再拼装」的推理不成立，parts 的偏移也不再可信。**不是审计记录**：留痕用 fingerprint_view()。"
+    },
+    "has_text": {
+      "type": "boolean",
+      "description": "H5。★ 不是判定输入，是**路由输入**（ADR-0012 D5）：为假时走 DP0，不进审查队列、不进空白清单。存量 291 条里 59 条如此（全是 Google PLA，结构上无 Primary Text）。"
+    },
+    "routing": {
+      "type": "object",
+      "description": "H14。键必须是 judge() 真的接受的形参名 —— 否则「路由键」会变成没人读的装饰字段。判据是「按什么查得到收件人」（ADR-0012 D14）。",
+      "additionalProperties": { "type": ["string", "null"] },
+      "propertyNames": {
+        "enum": ["product_line", "locale", "platform", "campaign", "ad_id", "ad_type", "ad_account"]
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "★ 不进判定，也不做路由键。花费/展示/点击/广告组/投放状态是**盘子大小**的背景，不是「送给谁」的依据。与 judge() 形参零交集，自证里有一条断言在守。",
+      "additionalProperties": true
+    },
+    "reference_verdict": {
+      "type": ["object", "null"],
+      "description": "H13。人工判定结果（风险等级/处理状态/命中规则…），**只作对照**。让它进 judge() 的输入就等于用答案评自己的卷子。"
+    }
+  }
+}

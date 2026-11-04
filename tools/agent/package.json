@@ -1,0 +1,15 @@
+{
+  "name": "shouheng",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "守衡 —— 面向飞书的智能体。长连接事件总线 + DeepSeek 推理内核 + 工具层。",
+  "main": "ws_daemon.mjs",
+  "scripts": {
+    "start": "node ws_daemon.mjs",
+    "probe": "node ws_daemon.mjs --probe"
+  },
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.74.0"
+  }
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  守衡 · launchd 守护配置
+  安装：cp 到 ~/Library/LaunchAgents/ && launchctl load -w
+  卸载：launchctl unload -w ~/Library/LaunchAgents/com.shouheng.lark.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.shouheng.lark</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/lute/Project/audit_multi_content/tools/run_shouheng.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/lute/Project/audit_multi_content/tools</string>
+
+  <!-- 登录即启动（守衡要常驻在线，不能被登录时机影响） -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- 崩了就拉起来；10 秒内起太频繁则退避，避免疯狂重启刷爆日志 -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/lute/Project/audit_multi_content/PMO/logs/ws_daemon.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/lute/Project/audit_multi_content/PMO/logs/ws_daemon.err.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>LANG</key>
+    <string>zh_CN.UTF-8</string>
+  </dict>
+
+  <!-- 进程变僵尸/卡死时由 launchd 处理 -->
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

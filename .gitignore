@@ -1,0 +1,15 @@
+node_modules/
+.backups/
+__pycache__/
+*.pyc
+*.bak
+*.bak-*
+*.log
+.DS_Store
+.env
+*.key
+*.pem
+PMO/
+内容治理知识库/
+test_pic/
+tests/
